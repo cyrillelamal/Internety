@@ -38,7 +38,7 @@ public class SiteMap {
      * @param u the checked URI.
      * @return true, if the provided URI is a relative URI or it has the same host.
      */
-    public synchronized boolean sameHost(final URI u) {
+    public boolean sameHost(final URI u) {
         return u.getHost() == null || u.getHost().equals(this.getHost());
     }
 
@@ -48,7 +48,7 @@ public class SiteMap {
      * @param serializer a serializer with a specific format.
      * @return the text representation of the sitemap.
      */
-    public String serialize(final SerializerInterface serializer) {
+    public synchronized String serialize(final SerializerInterface serializer) {
         return serializer.serialize(this);
     }
 
