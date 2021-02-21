@@ -8,11 +8,11 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
 
 public class FutureFiller implements AsynchronousFillerInterface {
     private final SiteMap map;
@@ -20,6 +20,24 @@ public class FutureFiller implements AsynchronousFillerInterface {
     private final HttpClient client = HttpClient.newBuilder().build();
 
     private final Queue<CompletableFuture<Void>> futures = new ConcurrentLinkedQueue<>();
+
+    /**
+     * Get the href without its anchor part.
+     *
+     * @param ref the href that may contain the anchor.
+     * @return the passed ref without its anchor part.
+     * If the passed ref does not contain any anchor, the passed ref is returned without any modifications.
+     * If the passed ref starts with an anchor, an empty string is returned.
+     */
+    protected static String getRefWithoutAnchor(final String ref) {
+        int idx = ref.indexOf('#');
+
+        if (idx == 0) return "";
+
+        return idx > 0
+                ? ref.substring(0, idx - 1)
+                : ref;
+    }
 
     /**
      * Create an asynchronous filler that uses completable futures.
@@ -35,14 +53,11 @@ public class FutureFiller implements AsynchronousFillerInterface {
      */
     @Override
     public List<String> parseRefs(final String body) {
-        var doc = Jsoup.parse(body);
-        var tags = doc.select("a");
-
-        List<String> refs = new ArrayList<>();
-
-        for (var a : tags) if (a.hasAttr("href")) refs.add(a.attr("href").trim());
-
-        return refs;
+        return Jsoup.parse(body).select("a")
+                .stream()
+                .filter(a -> a.hasAttr("href"))
+                .map(a -> a.attr("href").trim())
+                .collect(Collectors.toList());
     }
 
     /**
@@ -51,7 +66,7 @@ public class FutureFiller implements AsynchronousFillerInterface {
     public FutureFiller fill() {
         URI start = this.getMap().getStart();
 
-        var f = this.launchFuture(start);
+        CompletableFuture<Void> f = this.launchFuture(start); // An active not completed future
 
         this.getFutures().add(f);
 
@@ -62,11 +77,11 @@ public class FutureFiller implements AsynchronousFillerInterface {
      * @see AsynchronousFillerInterface#synchronize
      */
     public void synchronize() {
-        boolean done = false;
+        Queue<CompletableFuture<Void>> futures = this.getFutures();
 
-        while (!done) {
-            done = true;
-            for (var f : this.getFutures()) if (!f.isDone()) done = false;
+        while (!futures.isEmpty()) {
+            var peek = futures.remove();
+            if (peek != null && !peek.isDone()) futures.add(peek);
         }
     }
 
@@ -88,7 +103,7 @@ public class FutureFiller implements AsynchronousFillerInterface {
     protected CompletableFuture<Void> launchFuture(final URI uri) {
         this.getMap().inscribe(uri); // visited
 
-        var req = HttpRequest.newBuilder().uri(uri).build();
+        HttpRequest req = HttpRequest.newBuilder().uri(uri).build();
 
         return this.getClient().sendAsync(req, HttpResponse.BodyHandlers.ofString())
                 .thenApply(HttpResponse::body)
@@ -127,23 +142,5 @@ public class FutureFiller implements AsynchronousFillerInterface {
      */
     private HttpClient getClient() {
         return this.client;
-    }
-
-    /**
-     * Get the href without its anchor part.
-     *
-     * @param ref the href that may contain the anchor.
-     * @return the passed ref without its anchor part.
-     * If the passed ref does not contain any anchor, the passed ref is returned without any modifications.
-     * If the passed ref starts with an anchor, an empty string is returned.
-     */
-    protected static String getRefWithoutAnchor(final String ref) {
-        var idx = ref.indexOf('#');
-
-        if (idx == 0) return "";
-
-        return idx > 0
-                ? ref.substring(0, idx - 1)
-                : ref;
     }
 }
