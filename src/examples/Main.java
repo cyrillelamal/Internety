@@ -11,10 +11,10 @@ public class Main {
     final static String HREF = "https://cheatsheetseries.owasp.org/";
 
     public static void main(String[] args) throws Exception {
-        URI start = new URI(HREF);
+        var start = new URI(HREF);
 
-        SiteMap map = new SiteMap(start);
-        AsynchronousFillerInterface filler = new FutureFiller(map);
+        var siteMap = new SiteMap(start);
+        AsynchronousFillerInterface filler = new FutureFiller(siteMap);
 
         filler.fill().synchronize();
 
@@ -23,7 +23,7 @@ public class Main {
                 ? new TxtSerializer()
                 : new XMLSerializer();
 
-        String result = map.serialize(serializer);
+        String result = siteMap.serialize(serializer);
         // The strategy pattern
         // This is equals to
         // serializer.serialize(map)

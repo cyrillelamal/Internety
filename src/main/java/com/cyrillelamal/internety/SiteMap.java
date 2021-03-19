@@ -7,7 +7,6 @@ import java.util.HashSet;
 
 public class SiteMap {
     private final URI start;
-    private final String host;
 
     private final HashSet<URI> uris = new HashSet<>();
 
@@ -18,8 +17,6 @@ public class SiteMap {
      */
     public SiteMap(final URI start) {
         this.start = start;
-
-        this.host = start.getHost();
     }
 
     /**
@@ -67,7 +64,7 @@ public class SiteMap {
      * @return the host of the entry point URI.
      */
     public String getHost() {
-        return this.host;
+        return this.getStart().getHost();
     }
 
     /**

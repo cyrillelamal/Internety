@@ -1,6 +1,7 @@
 package com.cyrillelamal.internety.Fillers;
 
 import com.cyrillelamal.internety.SiteMap;
+import com.cyrillelamal.internety.URLUtils;
 import org.jsoup.Jsoup;
 
 import java.net.URI;
@@ -20,24 +21,6 @@ public class FutureFiller implements AsynchronousFillerInterface {
     private final HttpClient client = HttpClient.newBuilder().build();
 
     private final Queue<CompletableFuture<Void>> futures = new ConcurrentLinkedQueue<>();
-
-    /**
-     * Get the href without its anchor part.
-     *
-     * @param ref the href that may contain the anchor.
-     * @return the passed ref without its anchor part.
-     * If the passed ref does not contain any anchor, the passed ref is returned without any modifications.
-     * If the passed ref starts with an anchor, an empty string is returned.
-     */
-    protected static String getRefWithoutAnchor(final String ref) {
-        int idx = ref.indexOf('#');
-
-        if (idx == 0) return "";
-
-        return idx > 0
-                ? ref.substring(0, idx - 1)
-                : ref;
-    }
 
     /**
      * Create an asynchronous filler that uses completable futures.
@@ -80,7 +63,7 @@ public class FutureFiller implements AsynchronousFillerInterface {
         Queue<CompletableFuture<Void>> futures = this.getFutures();
 
         while (!futures.isEmpty()) {
-            var peek = futures.remove();
+            CompletableFuture<Void> peek = futures.remove();
             if (peek != null && !peek.isDone()) futures.add(peek);
         }
     }
@@ -110,7 +93,7 @@ public class FutureFiller implements AsynchronousFillerInterface {
                 .thenAccept(res -> {
                     for (String href : this.parseRefs(res)) {
                         try {
-                            href = FutureFiller.getRefWithoutAnchor(href);
+                            href = URLUtils.refWithoutAnchor(href);
 
                             var v = new URI(href);
 
