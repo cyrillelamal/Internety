@@ -2,7 +2,11 @@ package com.cyrillelamal.internety.Serializers;
 
 import com.cyrillelamal.internety.SiteMap;
 
+import java.net.URI;
+
 public class TxtSerializer implements SerializerInterface {
+    public static final String DELIMITER = "\n";
+
     /**
      * Serialize to the .txt format.
      *
@@ -12,10 +16,11 @@ public class TxtSerializer implements SerializerInterface {
     public String serialize(final SiteMap map) {
         var sb = new StringBuilder();
 
-        for (var u : map.getUris()) {
+        for (URI u : map.getUris()) {
             sb.append(u.toString());
-            sb.append("\n");
+            sb.append(TxtSerializer.DELIMITER);
         }
+
         return sb.toString();
     }
 }

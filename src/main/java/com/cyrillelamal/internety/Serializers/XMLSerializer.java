@@ -3,8 +3,8 @@ package com.cyrillelamal.internety.Serializers;
 import com.cyrillelamal.internety.SiteMap;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Text;
 
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
@@ -23,11 +23,47 @@ public class XMLSerializer implements SerializerInterface {
         try {
             Document document = XMLSerializer.buildEmptyDocument();
 
-            addUrlsetChildren(document, map.getUris());
+            XMLSerializer.addUrlsetChildren(document, map.getUris());
 
             return XMLSerializer.xmlToString(document);
         } catch (ParserConfigurationException | TransformerException ignored) {
             return "";
+        }
+    }
+
+    /**
+     * Create a new empty XML document.
+     *
+     * @return an empty XML document.
+     * @throws ParserConfigurationException thrown when the document configuration contains errors.
+     */
+    protected static Document buildEmptyDocument() throws ParserConfigurationException {
+        return DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+    }
+
+    /**
+     * Fill the document with URIs.
+     *
+     * @param document the target document.
+     * @param uris     a set of URIs to be listed in the document.
+     */
+    protected static void addUrlsetChildren(final Document document, final Set<URI> uris) {
+        Element urlset = document.createElement("urlset");
+        urlset.setAttribute("xmlns", "http://www.sitemaps.org/schemas/sitemap/0.9");
+        urlset.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+        urlset.setAttribute("xsi:schemaLocation", "http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd");
+        document.appendChild(urlset);
+
+        for (var uri : uris) {
+            final Element url = document.createElement("url");
+            urlset.appendChild(url);
+
+            final Element loc = document.createElement("loc");
+            final String txt = uri.toString();
+            final Text val = document.createTextNode(txt);
+            loc.appendChild(val);
+
+            url.appendChild(loc);
         }
     }
 
@@ -38,51 +74,17 @@ public class XMLSerializer implements SerializerInterface {
      * @return the contents of the document as a string.
      * @throws TransformerException thrown when the document cannot be translated.
      */
-    protected static String xmlToString(Document document) throws TransformerException {
-        TransformerFactory tf = TransformerFactory.newInstance();
-        Transformer transformer = tf.newTransformer();
-        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-        transformer.setOutputProperty(OutputKeys.INDENT, "no");
-        StringWriter writer = new StringWriter();
-        transformer.transform(new DOMSource(document), new StreamResult(writer));
+    protected static String xmlToString(final Document document) throws TransformerException {
+        Transformer t = TransformerFactory.newInstance().newTransformer();
+        t.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        t.setOutputProperty(OutputKeys.INDENT, "no");
 
-        return writer.getBuffer().toString();
-    }
+        var ds = new DOMSource(document);
+        var w = new StringWriter();
+        var sr = new StreamResult(w);
 
-    /**
-     * Create a new empty XML document.
-     *
-     * @return an empty XML document.
-     * @throws ParserConfigurationException thrown when the document configuration contains errors.
-     */
-    protected static Document buildEmptyDocument() throws ParserConfigurationException {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
+        t.transform(ds, sr);
 
-        return builder.newDocument();
-    }
-
-    /**
-     * Fill the document with URIs.
-     *
-     * @param document the target document.
-     * @param uris     a set of URIs to be listed in the document.
-     */
-    protected static void addUrlsetChildren(Document document, Set<URI> uris) {
-        Element urlset = document.createElement("urlset");
-        document.appendChild(urlset);
-        urlset.setAttribute("xmlns", "http://www.sitemaps.org/schemas/sitemap/0.9");
-        urlset.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
-        urlset.setAttribute("xsi:schemaLocation", "http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd");
-
-        for (var uri : uris) {
-            Element url = document.createElement("url");
-            urlset.appendChild(url);
-
-            Element loc = document.createElement("loc");
-            loc.appendChild(document.createTextNode(uri.toString()));
-
-            url.appendChild(loc);
-        }
+        return w.getBuffer().toString();
     }
 }

@@ -1,21 +1,32 @@
 package com.cyrillelamal.internety;
 
+import java.net.URI;
+
 public class URLUtils {
     /**
-     * Get the href without its anchor part.
+     * Remove the anchor part.
      *
-     * @param ref the href that may contain the anchor.
-     * @return the passed ref without its anchor part.
-     * If the passed ref does not contain any anchor, the passed ref is returned without any modifications.
-     * If the passed ref starts with an anchor, an empty string is returned.
+     * @param href the href that may contain an anchor part.
+     * @return the href without its anchor part.
+     * If the passed href does not contain any anchor, the passed ref is returned without any modifications.
+     * If the passed href starts with an anchor, an empty string is returned.
      */
-    public static String refWithoutAnchor(final String ref) {
-        final int idx = ref.indexOf('#');
+    public static String hrefWithoutAnchor(final String href) {
+        final int idx = href.indexOf('#');
 
-        if (idx == 0) return "";
+        return idx == 0 ? "" : idx > 0
+                ? href.substring(0, idx - 1)
+                : href;
+    }
 
-        return idx > 0
-                ? ref.substring(0, idx - 1)
-                : ref;
+    /**
+     * Check if the URIs have the same host.
+     *
+     * @param origin the original URI against which is compared the other one.
+     * @param other  the other URI. It may be a relative URI.
+     * @return true, if the provided URIs belong to the same host or the other URI is a relative one.
+     */
+    public static boolean hasSameHost(final URI origin, final URI other) {
+        return other.getHost() == null || other.getHost().equals(origin.getHost());
     }
 }

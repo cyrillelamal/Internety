@@ -19,7 +19,7 @@ SiteMap map = new SiteMap(new URI("https://host.com/foo/start"));
 1. Create a filler.
 
 ```java
-AsynchronousFillerInterface filler = new FutureFiller(map); // This implementation uses CompletableFuture
+AsynchronousFillerInterface filler = new ThreadPoolFiller(map, 4); // This implementation uses Futures
 ```
 
 There are no reasons to use a more generic `FillerInterface`, but you can build your implementations for this one.
@@ -33,12 +33,12 @@ filler.fill();
 The thread will finish before the futures are completed. So you have to join them.
 
 ```java
-filler.synchronize(); // or filler.fill().synchronize();
+filler.await(); // or filler.fill().await();
 ```
 
 3. Get the result, e.g. print it somewhere.
 
-Use the implementations of the `SerializerInterface`.
+Use implementations of the `SerializerInterface`.
 
 ```java
 SerializerInterface serializer = new TxtSerializer();
@@ -52,7 +52,7 @@ There are:
 It uses the strategy pattern against site maps.
 
 ```java
-Sting result=serializer.serialize(map);
+Sting result = serializer.serialize(map);
 ```
 
 ### add your serializer?
@@ -63,3 +63,12 @@ Implement the `SerializerInterface` and use it.
 
 It is highly recommended implementing the `AsynchronousFillerInterface`, e.g. using threads (even only one). Or you can
 implement the more generic `FillerInterface`.
+
+### create distributed or heavy sitemap?
+
+At the moment the `AsynchronousFillerInterface` proposes the `onBeforeTaskCreated`
+callback which is implemented in the `ThreadPoolFiller` via the `TaskLifecycleHandlerInterface` interface.
+
+More simply, it means that you can pass an implementation of the `TaskLifecycleHandlerInterface` interface to the
+constructor of `ThreadPoolFiller`. This implementation will handle inscribed URIs before launch any task and handle
+other URIs.

@@ -1,5 +1,5 @@
 import com.cyrillelamal.internety.Fillers.AsynchronousFillerInterface;
-import com.cyrillelamal.internety.Fillers.FutureFiller;
+import com.cyrillelamal.internety.Fillers.ThreadPoolFiller;
 import com.cyrillelamal.internety.Serializers.SerializerInterface;
 import com.cyrillelamal.internety.Serializers.TxtSerializer;
 import com.cyrillelamal.internety.Serializers.XMLSerializer;
@@ -9,14 +9,15 @@ import java.net.URI;
 
 public class Main {
     final static String HREF = "https://cheatsheetseries.owasp.org/";
+    final static int N_THREADS = 16;
 
     public static void main(String[] args) throws Exception {
         var start = new URI(HREF);
 
         var siteMap = new SiteMap(start);
-        AsynchronousFillerInterface filler = new FutureFiller(siteMap);
+        AsynchronousFillerInterface filler = new ThreadPoolFiller(siteMap, N_THREADS);
 
-        filler.fill().synchronize();
+        filler.fill().await();
 
         // Just for demonstration purposes
         SerializerInterface serializer = Math.random() > 0.5

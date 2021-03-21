@@ -30,17 +30,7 @@ public class SiteMap {
     }
 
     /**
-     * Check if the URI has the same host as the entry point URI.
-     *
-     * @param u the checked URI.
-     * @return true, if the provided URI is a relative URI or it has the same host.
-     */
-    public boolean sameHost(final URI u) {
-        return u.getHost() == null || u.getHost().equals(this.getHost());
-    }
-
-    /**
-     * Get the resulting sitemap ready to be loaded or printed somewhere.
+     * Get the text representation of the sitemap.
      *
      * @param serializer a serializer with a specific format.
      * @return the text representation of the sitemap.
@@ -63,7 +53,7 @@ public class SiteMap {
      *
      * @return the host of the entry point URI.
      */
-    public String getHost() {
+    public String getStartHost() {
         return this.getStart().getHost();
     }
 
